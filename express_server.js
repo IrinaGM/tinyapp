@@ -62,15 +62,15 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// route to remove a URL resource
-app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
+// route to update a URL resource
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
   res.redirect("/urls");
 });
 
-// route to update a URL resource
-app.post("/urls/:id/update", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+// route to remove a URL resource
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
