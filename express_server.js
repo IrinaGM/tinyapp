@@ -68,6 +68,12 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+// route to update a URL resource
+app.post("/urls/:id/update", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
+  res.redirect("/urls");
+});
+
 // route to redirect the user to the longURL per provided URL id
 app.get("/u/:id", (req, res) => {
   // TODO: handle short URL with non-existing id
