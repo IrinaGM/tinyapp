@@ -62,6 +62,13 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// route to remove a URL resource
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
+});
+
+// route to redirect the user to the longURL per provided URL id
 app.get("/u/:id", (req, res) => {
   // TODO: handle short URL with non-existing id
   const longURL = urlDatabase[req.params.id];
