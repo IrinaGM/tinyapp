@@ -1,9 +1,11 @@
 const express = require("express");
+const morgan = require("morgan");
 const app = express();
 const PORT = 8080;
 
 app.set("view engine", "ejs"); // set ejs as the view engine
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // middleware that parses incoming requests with URL-encoded payloads and is based on a body parser
+app.use(morgan("dev")); // middleware to log HTTP requests for my app
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
