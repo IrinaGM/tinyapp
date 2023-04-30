@@ -40,13 +40,13 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// route to revieve the form subission as part of urls_new.ejs template
+// route to receive the form subission as part of urls_new.ejs template
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
+  console.log(req.body);
 
   const newId = generateRandomString();
 
-  urlDatabase[newId] = req.body.longURL;
+  urlDatabase[newId] = req.body.longURL; // add the new url to DB.
 
   res.redirect(`/urls/${newId}`);
 });
@@ -60,6 +60,12 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:id", (req, res) => {
+  // TODO: handle short URL with non-existing id
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
 });
 
 app.get("/urls.json", (req, res) => {
