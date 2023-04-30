@@ -30,6 +30,12 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+// route to recive the username for user login
+app.post("/login", (req, res) => {
+  res.cookie("name", req.body.username);
+  res.redirect("/urls");
+});
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
