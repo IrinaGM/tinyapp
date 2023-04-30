@@ -1,11 +1,13 @@
 const express = require("express");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080;
 
 app.set("view engine", "ejs"); // set ejs as the view engine
 app.use(express.urlencoded({ extended: true })); // middleware that parses incoming requests with URL-encoded payloads and is based on a body parser
 app.use(morgan("dev")); // middleware to log HTTP requests for my app
+app.use(cookieParser()); // middleware to parse cookies
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
@@ -32,17 +34,18 @@ app.get("/", (req, res) => {
 
 // route to recive the username for user login
 app.post("/login", (req, res) => {
-  res.cookie("name", req.body.username);
+  res.cookie("username", req.body.username);
   res.redirect("/urls");
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+//TODO: clean up unused route:
+// app.get("/hello", (req, res) => {
+//   res.send("<html><body>Hello <b>World</b></body></html>\n");
+// });
 
 // route to render the urls_index.ejs template
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 
@@ -59,12 +62,17 @@ app.post("/urls", (req, res) => {
 
 // route to render the urls_new.ejs template
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 // route to render the urls_show.ejs template
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    username: req.cookies["username"],
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -87,9 +95,10 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
+//TODO: clean up unused route:
+// app.get("/urls.json", (req, res) => {
+//   res.json(urlDatabase);
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
