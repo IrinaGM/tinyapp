@@ -18,7 +18,14 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <%if (!username) { %>
+    <%if (username) { %>
+    <form class="form-inline" action="/logout" method="POST">
+      <div class="form-group mb-2 d-flex align-items-center">
+        <p>Logged in as: <%= username %></p>
+        <button type="submit" class="btn btn-outline-dark">Logout</button>
+      </div>
+    </form>
+    <% } else { %>
     <form class="form-inline" action="/login" method="POST">
       <div class="form-group mb-2 d-flex align-items-center">
         <input
@@ -29,13 +36,6 @@
           style="width: 300px; margin: 1em"
         />
         <button type="submit" class="btn btn-primary">Login</button>
-      </div>
-    </form>
-    <% } else { %>
-    <form class="form-inline" action="/logout" method="POST">
-      <div class="form-group mb-2 d-flex align-items-center">
-        <p>Logged in as: <%= username %></p>
-        <button type="submit" class="btn btn-outline-dark">Logout</button>
       </div>
     </form>
     <% } %>

@@ -38,6 +38,12 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+// route that clears the username cookie and redirects the user back to the /urls page
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls"); //TODO: to redirect to login page
+});
+
 //TODO: clean up unused route:
 // app.get("/hello", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
