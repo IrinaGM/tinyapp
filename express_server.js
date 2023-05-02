@@ -16,7 +16,7 @@ const urlDatabase = {
 
 /**
  * @function generateRandomString
- * @return {string} - 6 random alphanumeric characters
+ * @return {string} 6 random alphanumeric characters
  */
 const generateRandomString = () => {
   let string = "";
@@ -64,6 +64,12 @@ app.post("/urls", (req, res) => {
   urlDatabase[newId] = req.body.longURL; // add the new url to DB.
 
   res.redirect(`/urls/${newId}`);
+});
+
+// route for user registration form
+app.get("/register", (req, res) => {
+  const templateVars = { username: req.body.username, email: req.body.email };
+  res.render("urls_register", templateVars);
 });
 
 // route to render the urls_new.ejs template
