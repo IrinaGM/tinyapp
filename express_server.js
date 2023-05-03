@@ -36,6 +36,21 @@ const generateRandomString = () => {
   return string.slice(0, length);
 };
 
+/**
+ * @function getUserByEmail finds if a user exists or not in the DB
+ * @param {string} email
+ * @returns {object} if user exists retuns the entire user object, if not returns null
+ */
+
+const getUserByEmail = (email) => {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+};
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -82,6 +97,15 @@ app.get("/register", (req, res) => {
 // rout POST for user registration form that saves the user data in local db and creates a cookie
 app.post("/register", (req, res) => {
   const newId = generateRandomString();
+  if (req.body.email === "" || req.body.password === "") {
+    res.status(400).send("Email and password cannot be blank");
+  }
+
+  if (getUserByEmail(req.body.email)) {
+    console.log("users", users);
+    res.status(400).send("User already exists");
+  }
+
   users[newId] = {
     id: newId,
     email: req.body.email,
