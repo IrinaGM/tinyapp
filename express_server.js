@@ -14,6 +14,14 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+const users = {
+  "5d63jf": {
+    id: "5d63jf",
+    email: "test@example.com",
+    password: "testpass",
+  },
+};
+
 /**
  * @function generateRandomString
  * @return {string} 6 random alphanumeric characters
@@ -34,7 +42,7 @@ app.get("/", (req, res) => {
 
 // route to recive the username for user login
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  //res.cookie("username", req.body.username);
   res.redirect("/urls");
 });
 
@@ -51,39 +59,52 @@ app.post("/logout", (req, res) => {
 
 // route to render the urls_index.ejs template
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const userData = users[req.cookies["user_id"]];
+  const templateVars = { urls: urlDatabase, user: userData };
   res.render("urls_index", templateVars);
 });
 
 // route to receive the form subission as part of urls_new.ejs template
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-
   const newId = generateRandomString();
-
   urlDatabase[newId] = req.body.longURL; // add the new url to DB.
-
   res.redirect(`/urls/${newId}`);
 });
 
-// route for user registration form
+// route GET for user registration form rendering
 app.get("/register", (req, res) => {
-  const templateVars = { username: req.body.username, email: req.body.email };
+  const userData =
+    users[req.cookies["user_id"]] === undefined ? null : users[req.cookies["user_id"]];
+  const templateVars = { user: userData };
   res.render("urls_register", templateVars);
+});
+
+// rout POST for user registration form that saves the user data in local db and creates a cookie
+app.post("/register", (req, res) => {
+  const newId = generateRandomString();
+  users[newId] = {
+    id: newId,
+    email: req.body.email,
+    password: req.body.password,
+  };
+  res.cookie("user_id", newId);
+  res.redirect("/urls");
 });
 
 // route to render the urls_new.ejs template
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const userData = users[req.cookies["user_id"]];
+  const templateVars = { user: userData };
   res.render("urls_new", templateVars);
 });
 
 // route to render the urls_show.ejs template
 app.get("/urls/:id", (req, res) => {
+  const userData = users[req.cookies["user_id"]];
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"],
+    user: userData,
   };
   res.render("urls_show", templateVars);
 });
