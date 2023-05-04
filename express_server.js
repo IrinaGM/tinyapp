@@ -57,8 +57,15 @@ app.get("/", (req, res) => {
 
 // route to recive the username for user login
 app.post("/login", (req, res) => {
-  //res.cookie("username", req.body.username);
+  //TODO: verify user credentials before redirect
   res.redirect("/urls");
+});
+
+// route to render the login page
+app.get("/login", (req, res) => {
+  const userData = users[req.cookies["user_id"]];
+  const templateVars = { user: userData };
+  res.render("login", templateVars);
 });
 
 // route that clears the username cookie and redirects the user back to the /urls page
