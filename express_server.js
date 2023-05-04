@@ -57,8 +57,10 @@ app.get("/", (req, res) => {
 
 // route for user registration form rendering
 app.get("/register", (req, res) => {
-  const userData =
-    users[req.cookies["user_id"]] === undefined ? null : users[req.cookies["user_id"]];
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  }
+  const userData = users[req.cookies["user_id"]];
   const templateVars = { user: userData };
   res.render("register", templateVars);
 });
@@ -86,6 +88,9 @@ app.post("/register", (req, res) => {
 
 // route to render the login page
 app.get("/login", (req, res) => {
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  }
   const userData = users[req.cookies["user_id"]];
   const templateVars = { user: userData };
   res.render("login", templateVars);
