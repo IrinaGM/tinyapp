@@ -16,28 +16,15 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        <a class="nav-item nav-link" href="/register">Register</a>
+        <% if (user) {%>
+        <form action="/logout" method="POST">
+          <button class="btn btn-dark" type="submit">Logout</button>
+        </form>
+        <% } else { %>
+        <a class="nav-item nav-link justify-content-end" href="/login">Login</a>
+        <% } %>
       </div>
     </div>
-    <%if (username) { %>
-    <form class="form-inline" action="/logout" method="POST">
-      <div class="form-group mb-2 d-flex align-items-center">
-        <p>Logged in as: <%= username %></p>
-        <button type="submit" class="btn btn-outline-dark">Logout</button>
-      </div>
-    </form>
-    <% } else { %>
-    <form class="form-inline" action="/login" method="POST">
-      <div class="form-group mb-2 d-flex align-items-center">
-        <input
-          class="form-control"
-          type="text"
-          name="username"
-          placeholder="Username"
-          style="width: 300px; margin: 1em"
-        />
-        <button type="submit" class="btn btn-primary">Login</button>
-      </div>
-    </form>
-    <% } %>
   </nav>
 </header>

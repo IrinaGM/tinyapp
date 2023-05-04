@@ -14,9 +14,17 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+const users = {
+  "5d63jf": {
+    id: "5d63jf",
+    email: "test@example.com",
+    password: "testpass",
+  },
+};
+
 /**
- * @function generateRandomString
- * @return {string} - 6 random alphanumeric characters
+ * @function generateRandomString returns string of 6 random alphanumeric characters
+ * @return {string} 6 random alphanumeric characters
  */
 const generateRandomString = () => {
   let string = "";
@@ -28,57 +36,114 @@ const generateRandomString = () => {
   return string.slice(0, length);
 };
 
+/**
+ * @function getUserByEmail finds if a user exists or not in the DB
+ * @param {string} email
+ * @returns {object} if user exists retuns the entire user object, if not returns null
+ */
+
+const getUserByEmail = (email) => {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+};
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-// route to recive the username for user login
-app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+// route for user registration form rendering
+app.get("/register", (req, res) => {
+  const userData =
+    users[req.cookies["user_id"]] === undefined ? null : users[req.cookies["user_id"]];
+  const templateVars = { user: userData };
+  res.render("register", templateVars);
+});
+
+// rout for user registration form that saves the user data in local db and creates a cookie
+app.post("/register", (req, res) => {
+  const newId = generateRandomString();
+  if (req.body.email === "" || req.body.password === "") {
+    res.status(400).send("Email and password cannot be blank");
+  }
+
+  if (getUserByEmail(req.body.email)) {
+    console.log("users", users);
+    res.status(400).send("User already exists");
+  }
+
+  users[newId] = {
+    id: newId,
+    email: req.body.email,
+    password: req.body.password,
+  };
+  res.cookie("user_id", newId);
   res.redirect("/urls");
 });
 
-// route that clears the username cookie and redirects the user back to the /urls page
-app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls"); //TODO: to redirect to login page
+// route to render the login page
+app.get("/login", (req, res) => {
+  const userData = users[req.cookies["user_id"]];
+  const templateVars = { user: userData };
+  res.render("login", templateVars);
 });
 
-//TODO: clean up unused route:
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
+// route to validate the email and password provided in login page
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  const userData = getUserByEmail(email);
+  if (!userData) {
+    res.status(403).send("Email cannot be found");
+  }
+  if (userData.password !== password) {
+    res.status(403).send("Password does not match for that email account");
+  }
+  res.cookie("user_id", userData.id);
+  res.redirect("/urls");
+});
 
-// route to render the urls_index.ejs template
+// route for logout functionality, clears the user name cookie and redirects the user back to the /login page
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/login");
+});
+
+// route to render the all existing URLs on "My URLs" page (urls_index.ejs view)
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const userData = users[req.cookies["user_id"]];
+  const templateVars = { urls: urlDatabase, user: userData };
   res.render("urls_index", templateVars);
 });
 
-// route to receive the form subission as part of urls_new.ejs template
+// route to save the new URL provided in a form on "New URL" page (urls_new.ejs view)
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-
   const newId = generateRandomString();
-
   urlDatabase[newId] = req.body.longURL; // add the new url to DB.
-
   res.redirect(`/urls/${newId}`);
 });
 
-// route to render the urls_new.ejs template
+// route to render the "Create TinyURL" page (urls_new.ejs view)
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const userData = users[req.cookies["user_id"]];
+  const templateVars = { user: userData };
   res.render("urls_new", templateVars);
 });
 
-// route to render the urls_show.ejs template
+// route to render the "URL Info" page (urls_show.ejs view)
 app.get("/urls/:id", (req, res) => {
+  const userData = users[req.cookies["user_id"]];
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"],
+    user: userData,
   };
+  //TODO: fix issue with route - when doing get to edit it adds ? at the end.
+  // console.log("GET req.params.id", req.params.id);
+  // console.log("GET templateVars", templateVars);
+
   res.render("urls_show", templateVars);
 });
 
@@ -100,11 +165,6 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
-
-//TODO: clean up unused route:
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
