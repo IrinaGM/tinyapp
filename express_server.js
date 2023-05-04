@@ -93,11 +93,19 @@ app.get("/login", (req, res) => {
 
 // route to validate the email and password provided in login page
 app.post("/login", (req, res) => {
-  const { email, password } = req.body;
+  const email = req.body.email ? req.body.email : null;
+  const password = req.body.password ? req.body.password : null;
+
+  // show error if email and/or passord was not provided
+  if (email === null || password === null) {
+    res.status(400).send("Please provide email and password");
+  }
+
   const userData = getUserByEmail(email);
   if (!userData) {
     res.status(403).send("Email cannot be found");
   }
+
   if (userData.password !== password) {
     res.status(403).send("Password does not match for that email account");
   }
@@ -121,7 +129,8 @@ app.get("/urls", (req, res) => {
 // route to save the new URL provided in a form on "New URL" page (urls_new.ejs view)
 app.post("/urls", (req, res) => {
   const newId = generateRandomString();
-  urlDatabase[newId] = req.body.longURL; // add the new url to DB.
+  // add the new url to DB.
+  urlDatabase[newId] = req.body.longURL;
   res.redirect(`/urls/${newId}`);
 });
 
@@ -140,9 +149,6 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[req.params.id],
     user: userData,
   };
-  //TODO: fix issue with route - when doing get to edit it adds ? at the end.
-  // console.log("GET req.params.id", req.params.id);
-  // console.log("GET templateVars", templateVars);
 
   res.render("urls_show", templateVars);
 });
