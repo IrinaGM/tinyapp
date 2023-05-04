@@ -91,7 +91,7 @@ app.get("/register", (req, res) => {
   const userData =
     users[req.cookies["user_id"]] === undefined ? null : users[req.cookies["user_id"]];
   const templateVars = { user: userData };
-  res.render("urls_register", templateVars);
+  res.render("register", templateVars);
 });
 
 // rout POST for user registration form that saves the user data in local db and creates a cookie
