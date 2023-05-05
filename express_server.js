@@ -10,8 +10,8 @@ app.use(morgan("dev")); // middleware to log HTTP requests for my app
 app.use(cookieParser()); // middleware to parse cookies
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "5d63jf" },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "5d63jf" },
 };
 
 const users = {
@@ -134,6 +134,7 @@ app.get("/urls", (req, res) => {
 
   const userData = users[req.cookies["user_id"]];
   const templateVars = { urls: urlDatabase, user: userData };
+  console.log("urlDatabase", urlDatabase);
   res.render("urls_index", templateVars);
 });
 
@@ -146,7 +147,7 @@ app.post("/urls", (req, res) => {
 
   const newId = generateRandomString();
   // add the new url to DB.
-  urlDatabase[newId] = req.body.longURL;
+  urlDatabase[newId] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
   res.redirect(`/urls/${newId}`);
 });
 
@@ -167,7 +168,7 @@ app.get("/urls/:id", (req, res) => {
   const userData = users[req.cookies["user_id"]];
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user: userData,
   };
 
@@ -176,7 +177,7 @@ app.get("/urls/:id", (req, res) => {
 
 // route to update a URL resource
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 
@@ -193,7 +194,7 @@ app.get("/u/:id", (req, res) => {
     return;
   }
 
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
 
