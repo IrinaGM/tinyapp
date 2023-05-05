@@ -136,7 +136,7 @@ app.get("/urls", (req, res) => {
 // route to save the new URL provided in a form on "New URL" page (urls_new.ejs view)
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
-    res.send("Please login or register to be able to shorten URL");
+    res.status(401).send("Please login or register to be able to shorten URL");
   }
 
   const newId = generateRandomString();
