@@ -127,16 +127,21 @@ app.post("/logout", (req, res) => {
 
 // route to render the all existing URLs on "My URLs" page (urls_index.ejs view)
 app.get("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.redirect("/login");
+    return;
+  }
+
   const userData = users[req.cookies["user_id"]];
   const templateVars = { urls: urlDatabase, user: userData };
   res.render("urls_index", templateVars);
-  return;
 });
 
 // route to save the new URL provided in a form on "New URL" page (urls_new.ejs view)
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
     res.status(401).send("Please login or register to be able to shorten URL");
+    return;
   }
 
   const newId = generateRandomString();
@@ -149,6 +154,7 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   if (!req.cookies["user_id"]) {
     res.redirect("/login");
+    return;
   }
 
   const userData = users[req.cookies["user_id"]];
@@ -182,7 +188,11 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // route to redirect the user to the longURL per provided URL id
 app.get("/u/:id", (req, res) => {
-  // TODO: handle short URL with non-existing id
+  if (!urlDatabase[req.params.id]) {
+    res.status(404).send(`${req.params.id} does not exist`);
+    return;
+  }
+
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
