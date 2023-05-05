@@ -57,10 +57,13 @@ app.get("/", (req, res) => {
 
 // route for user registration form rendering
 app.get("/register", (req, res) => {
+  // check if user already logged in by checking if cookie user_id exists
   if (req.cookies["user_id"]) {
     res.redirect("/urls");
     return;
   }
+
+  // TODO: check if that code still required:
   const userData = users[req.cookies["user_id"]];
   const templateVars = { user: userData };
   res.render("register", templateVars);
@@ -68,16 +71,20 @@ app.get("/register", (req, res) => {
 
 // rout for user registration form that saves the user data in local db and creates a cookie
 app.post("/register", (req, res) => {
-  const newId = generateRandomString();
+  // check if email or password were not provided, if not respond with error
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).send("Email and password cannot be blank");
+    return;
   }
 
+  // check if user exists in the users DB, if it does respond with an error
   if (getUserByEmail(req.body.email)) {
-    console.log("users", users);
     res.status(400).send("User already exists");
+    return;
   }
 
+  // save the new user to users DB, setup a cookie and redirect to /urls route
+  const newId = generateRandomString();
   users[newId] = {
     id: newId,
     email: req.body.email,
@@ -89,9 +96,11 @@ app.post("/register", (req, res) => {
 
 // route to render the login page
 app.get("/login", (req, res) => {
+  //check if user already logged in by checing if cookie user_id already exists
   if (req.cookies["user_id"]) {
     res.redirect("/urls");
   }
+  // find user's data based on the cookie info (users id)
   const userData = users[req.cookies["user_id"]];
   const templateVars = { user: userData };
   res.render("login", templateVars);
@@ -99,22 +108,32 @@ app.get("/login", (req, res) => {
 
 // route to validate the email and password provided in login page
 app.post("/login", (req, res) => {
+  // set user email and password if they exist, if not set them to null
   const email = req.body.email ? req.body.email : null;
   const password = req.body.password ? req.body.password : null;
 
   // show error if email and/or passord was not provided
   if (email === null || password === null) {
     res.status(400).send("Please provide email and password");
+    return;
   }
 
+  // check if user exists in users DB, if not userData will be false
   const userData = getUserByEmail(email);
+
+  // if user doesn't exist respond with error
   if (!userData) {
     res.status(403).send("Email cannot be found");
+    return;
   }
 
+  // if user exists but the passwords don't match, return error
   if (userData.password !== password) {
     res.status(403).send("Password does not match for that email account");
+    return;
   }
+
+  // set up cookie with the user id as written in users DB
   res.cookie("user_id", userData.id);
   res.redirect("/urls");
 });
@@ -127,6 +146,7 @@ app.post("/logout", (req, res) => {
 
 // route to render the all existing URLs on "My URLs" page (urls_index.ejs view)
 app.get("/urls", (req, res) => {
+  // check if user already logged in, if not redirect user to /login
   if (!req.cookies["user_id"]) {
     res.redirect("/login");
     return;
@@ -134,25 +154,25 @@ app.get("/urls", (req, res) => {
 
   const userData = users[req.cookies["user_id"]];
   const templateVars = { urls: urlDatabase, user: userData };
-  console.log("urlDatabase", urlDatabase);
   res.render("urls_index", templateVars);
 });
 
 // route to save the new URL provided in a form on "New URL" page (urls_new.ejs view)
 app.post("/urls", (req, res) => {
+  // check if users already logged in, if not respond with an error
   if (!req.cookies["user_id"]) {
     res.status(401).send("Please login or register to be able to shorten URL");
     return;
   }
-
-  const newId = generateRandomString();
   // add the new url to DB.
+  const newId = generateRandomString();
   urlDatabase[newId] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
   res.redirect(`/urls/${newId}`);
 });
 
 // route to render the "Create TinyURL" page (urls_new.ejs view)
 app.get("/urls/new", (req, res) => {
+  // check if user already logged in, if not redirect to /login
   if (!req.cookies["user_id"]) {
     res.redirect("/login");
     return;
@@ -165,6 +185,7 @@ app.get("/urls/new", (req, res) => {
 
 // route to render the "URL Info" page (urls_show.ejs view)
 app.get("/urls/:id", (req, res) => {
+  //pass the relevant templateVars to the urls_show template view
   const userData = users[req.cookies["user_id"]];
   const templateVars = {
     id: req.params.id,
@@ -177,6 +198,7 @@ app.get("/urls/:id", (req, res) => {
 
 // route to update a URL resource
 app.post("/urls/:id", (req, res) => {
+  //update the url in urlDatabase
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
@@ -189,11 +211,13 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // route to redirect the user to the longURL per provided URL id
 app.get("/u/:id", (req, res) => {
+  // check if url provided exists in urlDatabase, if not respond with an error
   if (!urlDatabase[req.params.id]) {
     res.status(404).send(`${req.params.id} does not exist`);
     return;
   }
 
+  // redirect the user to the requested URL
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
