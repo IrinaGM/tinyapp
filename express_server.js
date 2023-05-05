@@ -59,6 +59,7 @@ app.get("/", (req, res) => {
 app.get("/register", (req, res) => {
   if (req.cookies["user_id"]) {
     res.redirect("/urls");
+    return;
   }
   const userData = users[req.cookies["user_id"]];
   const templateVars = { user: userData };
@@ -129,10 +130,15 @@ app.get("/urls", (req, res) => {
   const userData = users[req.cookies["user_id"]];
   const templateVars = { urls: urlDatabase, user: userData };
   res.render("urls_index", templateVars);
+  return;
 });
 
 // route to save the new URL provided in a form on "New URL" page (urls_new.ejs view)
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.send("Please login or register to be able to shorten URL");
+  }
+
   const newId = generateRandomString();
   // add the new url to DB.
   urlDatabase[newId] = req.body.longURL;
@@ -141,6 +147,10 @@ app.post("/urls", (req, res) => {
 
 // route to render the "Create TinyURL" page (urls_new.ejs view)
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.redirect("/login");
+  }
+
   const userData = users[req.cookies["user_id"]];
   const templateVars = { user: userData };
   res.render("urls_new", templateVars);
