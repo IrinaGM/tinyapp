@@ -12,13 +12,20 @@ app.use(cookieParser()); // middleware to parse cookies
 const urlDatabase = {
   b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "5d63jf" },
   "9sm5xK": { longURL: "http://www.google.com", userID: "5d63jf" },
+  k2vVn3: { longURL: "http://www.youtube.com", userID: "8d23jK" },
+  "8sX5x5": { longURL: "http://www.netflix.ca", userID: "8d23jK" },
 };
 
 const users = {
   "5d63jf": {
     id: "5d63jf",
-    email: "test@example.com",
-    password: "testpass",
+    email: "test1@example.com",
+    password: "test1",
+  },
+  "8d23jK": {
+    id: "8d23jK",
+    email: "test2@example.com",
+    password: "test2",
   },
 };
 
@@ -41,7 +48,6 @@ const generateRandomString = () => {
  * @param {string} email
  * @returns {object} if user exists retuns the entire user object, if not returns null
  */
-
 const getUserByEmail = (email) => {
   for (const userId in users) {
     if (users[userId].email === email) {
@@ -49,6 +55,21 @@ const getUserByEmail = (email) => {
     }
   }
   return null;
+};
+
+/**
+ * @function urlsForUser
+ * @param {string} id
+ * @returns {object} returns a map of short urls to long urls for given userId
+ */
+const urlsForUser = (id) => {
+  const userUrls = {};
+  for (const urlKey in urlDatabase) {
+    if (urlDatabase[urlKey].userID === id) {
+      userUrls[urlKey] = urlDatabase[urlKey].longURL;
+    }
+  }
+  return userUrls;
 };
 
 app.get("/", (req, res) => {
@@ -63,7 +84,6 @@ app.get("/register", (req, res) => {
     return;
   }
 
-  // TODO: check if that code still required:
   const userData = users[req.cookies["user_id"]];
   const templateVars = { user: userData };
   res.render("register", templateVars);
@@ -146,14 +166,17 @@ app.post("/logout", (req, res) => {
 
 // route to render the all existing URLs on "My URLs" page (urls_index.ejs view)
 app.get("/urls", (req, res) => {
-  // check if user already logged in, if not redirect user to /login
+  // check if user already logged in, if not respond with error
   if (!req.cookies["user_id"]) {
-    res.redirect("/login");
+    res.status(401).send("Please login or register to be able to see your shorten URLs");
     return;
   }
 
+  //populate templateVars based on user id
   const userData = users[req.cookies["user_id"]];
-  const templateVars = { urls: urlDatabase, user: userData };
+  const userUrls = urlsForUser(req.cookies["user_id"]);
+  const templateVars = { urls: userUrls, user: userData };
+
   res.render("urls_index", templateVars);
 });
 
@@ -185,11 +208,26 @@ app.get("/urls/new", (req, res) => {
 
 // route to render the "URL Info" page (urls_show.ejs view)
 app.get("/urls/:id", (req, res) => {
-  //pass the relevant templateVars to the urls_show template view
+  // check if user already logged in, if not respond with appropriate error
+  if (!req.cookies["user_id"]) {
+    res.status(401).send("Please login or register to be able see shorten URL");
+    return;
+  }
+
+  //get the urls data for given userId
+  const userUrls = urlsForUser(req.cookies["user_id"]);
+
+  // check if the the URL belongs to the user, if not respond with an error
+  if (!userUrls[req.params.id]) {
+    res.status(403).send("The shorten URL you are trying to access belongs to a different user");
+    return;
+  }
+
+  //pass the relevant information by templateVars to the urls_show template view
   const userData = users[req.cookies["user_id"]];
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
+    longURL: userUrls[req.params.id],
     user: userData,
   };
 
