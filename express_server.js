@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
 
@@ -108,8 +109,10 @@ app.post("/register", (req, res) => {
   users[newId] = {
     id: newId,
     email: req.body.email,
-    password: req.body.password,
+    password: bcrypt.hashSync(req.body.password, 10),
   };
+
+  console.log("user[newId]", users[newId]);
   res.cookie("user_id", newId);
   res.redirect("/urls");
 });
@@ -148,7 +151,7 @@ app.post("/login", (req, res) => {
   }
 
   // if user exists but the passwords don't match, return error
-  if (userData.password !== password) {
+  if (!bcrypt.compareSync(password, userData.password)) {
     res.status(403).send("Password does not match for that email account");
     return;
   }
