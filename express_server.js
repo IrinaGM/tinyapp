@@ -3,6 +3,11 @@ const morgan = require("morgan");
 //const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+
+//import helper functions
+const { getUserByEmail, generateRandomString, urlsForUser } = require("./helpers");
+
+// app setup
 const app = express();
 const PORT = 8080;
 
@@ -37,49 +42,6 @@ const users = {
   },
 };
 
-/**
- * @function generateRandomString returns string of 6 random alphanumeric characters
- * @return {string} 6 random alphanumeric characters
- */
-const generateRandomString = () => {
-  let string = "";
-  const length = 6;
-  Array.from({ length }).some(() => {
-    string += Math.random().toString(36).slice(2);
-    return string.length >= length;
-  });
-  return string.slice(0, length);
-};
-
-/**
- * @function getUserByEmail finds if a user exists or not in the DB
- * @param {string} email
- * @returns {object} if user exists retuns the entire user object, if not returns null
- */
-const getUserByEmail = (email) => {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
-};
-
-/**
- * @function urlsForUser
- * @param {string} id
- * @returns {object} returns a map of short urls to long urls for given userId
- */
-const urlsForUser = (id) => {
-  const userUrls = {};
-  for (const urlKey in urlDatabase) {
-    if (urlDatabase[urlKey].userID === id) {
-      userUrls[urlKey] = urlDatabase[urlKey].longURL;
-    }
-  }
-  return userUrls;
-};
-
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -106,7 +68,7 @@ app.post("/register", (req, res) => {
   }
 
   // check if user exists in the users DB, if it does respond with an error
-  if (getUserByEmail(req.body.email)) {
+  if (getUserByEmail(req.body.email, users)) {
     res.status(400).send("User already exists");
     return;
   }
@@ -131,6 +93,7 @@ app.get("/login", (req, res) => {
   //check if user already logged in by checing if cookie user_id already exists
   if (req.session.user_id) {
     res.redirect("/urls");
+    return;
   }
   // find user's data based on the cookie info (users id)
   const userData = users[req.session.user_id];
@@ -151,7 +114,7 @@ app.post("/login", (req, res) => {
   }
 
   // check if user exists in users DB, if not userData will be false
-  const userData = getUserByEmail(email);
+  const userData = getUserByEmail(email, users);
 
   // if user doesn't exist respond with error
   if (!userData) {
@@ -187,7 +150,7 @@ app.get("/urls", (req, res) => {
 
   //populate templateVars based on user id
   const userData = users[req.session.user_id];
-  const userUrls = urlsForUser(req.session.user_id);
+  const userUrls = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = { urls: userUrls, user: userData };
 
   res.render("urls_index", templateVars);
@@ -215,6 +178,7 @@ app.get("/urls/new", (req, res) => {
   }
 
   const userData = users[req.session.user_id];
+  console.log("userData", userData);
   const templateVars = { user: userData };
   res.render("urls_new", templateVars);
 });
@@ -234,7 +198,7 @@ app.get("/urls/:id", (req, res) => {
   }
 
   //get the urls data for given userId
-  const userUrls = urlsForUser(req.session.user_id);
+  const userUrls = urlsForUser(req.session.user_id, urlDatabase);
 
   // check if the the URL belongs to the user, if not respond with an error
   if (!userUrls[req.params.id]) {
@@ -268,7 +232,7 @@ app.post("/urls/:id", (req, res) => {
   }
 
   //get the urls data for given userId
-  const userUrls = urlsForUser(req.session.user_id);
+  const userUrls = urlsForUser(req.session.user_id, urlDatabase);
 
   // check if the the URL belongs to the user, if not respond with an error
   if (!userUrls[req.params.id]) {
@@ -296,7 +260,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 
   //get the urls data for given userId
-  const userUrls = urlsForUser(req.session.user_id);
+  const userUrls = urlsForUser(req.session.user_id, urlDatabase);
 
   // check if the the URL belongs to the user, if not respond with an error
   if (!userUrls[req.params.id]) {
