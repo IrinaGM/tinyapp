@@ -214,6 +214,12 @@ app.get("/urls/:id", (req, res) => {
     return;
   }
 
+  // check if shorten url exists in the DB, if not respond with appropriate error
+  if (!urlDatabase[req.params.id]) {
+    res.status(404).send("The shorten URL you are trying to acces does not exist");
+    return;
+  }
+
   //get the urls data for given userId
   const userUrls = urlsForUser(req.cookies["user_id"]);
 
@@ -236,6 +242,27 @@ app.get("/urls/:id", (req, res) => {
 
 // route to update a URL resource
 app.post("/urls/:id", (req, res) => {
+  // check if user already logged in, if not respond with appropriate error
+  if (!req.cookies["user_id"]) {
+    res.status(401).send("Please login or register to be able to update the URL");
+    return;
+  }
+
+  // check if shorten url exists in the DB, if not respond with appropriate error
+  if (!urlDatabase[req.params.id]) {
+    res.status(404).send("The shorten URL you are trying to update does not exist");
+    return;
+  }
+
+  //get the urls data for given userId
+  const userUrls = urlsForUser(req.cookies["user_id"]);
+
+  // check if the the URL belongs to the user, if not respond with an error
+  if (!userUrls[req.params.id]) {
+    res.status(403).send("The shorten URL you are trying to update belongs to a different user");
+    return;
+  }
+
   //update the url in urlDatabase
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
@@ -243,6 +270,27 @@ app.post("/urls/:id", (req, res) => {
 
 // route to remove a URL resource
 app.post("/urls/:id/delete", (req, res) => {
+  // check if user already logged in, if not respond with appropriate error
+  if (!req.cookies["user_id"]) {
+    res.status(401).send("Please login or register to be able to delete the URL");
+    return;
+  }
+
+  // check if shorten url exists in the DB, if not respond with appropriate error
+  if (!urlDatabase[req.params.id]) {
+    res.status(404).send("The shorten URL you are trying to delete does not exist");
+    return;
+  }
+
+  //get the urls data for given userId
+  const userUrls = urlsForUser(req.cookies["user_id"]);
+
+  // check if the the URL belongs to the user, if not respond with an error
+  if (!userUrls[req.params.id]) {
+    res.status(403).send("The shorten URL you are trying to delete belongs to a different user");
+    return;
+  }
+
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
