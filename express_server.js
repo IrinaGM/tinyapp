@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
-const cookieParser = require("cookie-parser");
+//const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
@@ -8,7 +9,13 @@ const PORT = 8080;
 app.set("view engine", "ejs"); // set ejs as the view engine
 app.use(express.urlencoded({ extended: true })); // middleware that parses incoming requests with URL-encoded payloads and is based on a body parser
 app.use(morgan("dev")); // middleware to log HTTP requests for my app
-app.use(cookieParser()); // middleware to parse cookies
+//app.use(cookieParser()); // middleware to parse cookies
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["19jb07tbl"],
+  })
+);
 
 const urlDatabase = {
   b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "5d63jf" },
@@ -80,12 +87,12 @@ app.get("/", (req, res) => {
 // route for user registration form rendering
 app.get("/register", (req, res) => {
   // check if user already logged in by checking if cookie user_id exists
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect("/urls");
     return;
   }
 
-  const userData = users[req.cookies["user_id"]];
+  const userData = users[req.session.user_id];
   const templateVars = { user: userData };
   res.render("register", templateVars);
 });
@@ -113,18 +120,20 @@ app.post("/register", (req, res) => {
   };
 
   console.log("user[newId]", users[newId]);
-  res.cookie("user_id", newId);
+  //res.cookie("user_id", newId);
+  req.session.user_id = newId;
+  console.log("req.session.user_id", req.session.user_id);
   res.redirect("/urls");
 });
 
 // route to render the login page
 app.get("/login", (req, res) => {
   //check if user already logged in by checing if cookie user_id already exists
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   }
   // find user's data based on the cookie info (users id)
-  const userData = users[req.cookies["user_id"]];
+  const userData = users[req.session.user_id];
   const templateVars = { user: userData };
   res.render("login", templateVars);
 });
@@ -157,27 +166,28 @@ app.post("/login", (req, res) => {
   }
 
   // set up cookie with the user id as written in users DB
-  res.cookie("user_id", userData.id);
+  //res.cookie("user_id", userData.id);
+  req.session.user_id = userData.id;
   res.redirect("/urls");
 });
 
 // route for logout functionality, clears the user name cookie and redirects the user back to the /login page
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
 // route to render the all existing URLs on "My URLs" page (urls_index.ejs view)
 app.get("/urls", (req, res) => {
   // check if user already logged in, if not respond with error
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.status(401).send("Please login or register to be able to see your shorten URLs");
     return;
   }
 
   //populate templateVars based on user id
-  const userData = users[req.cookies["user_id"]];
-  const userUrls = urlsForUser(req.cookies["user_id"]);
+  const userData = users[req.session.user_id];
+  const userUrls = urlsForUser(req.session.user_id);
   const templateVars = { urls: userUrls, user: userData };
 
   res.render("urls_index", templateVars);
@@ -186,25 +196,25 @@ app.get("/urls", (req, res) => {
 // route to save the new URL provided in a form on "New URL" page (urls_new.ejs view)
 app.post("/urls", (req, res) => {
   // check if users already logged in, if not respond with an error
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.status(401).send("Please login or register to be able to shorten URL");
     return;
   }
   // add the new url to DB.
   const newId = generateRandomString();
-  urlDatabase[newId] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+  urlDatabase[newId] = { longURL: req.body.longURL, userID: req.session.user_id };
   res.redirect(`/urls/${newId}`);
 });
 
 // route to render the "Create TinyURL" page (urls_new.ejs view)
 app.get("/urls/new", (req, res) => {
   // check if user already logged in, if not redirect to /login
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.redirect("/login");
     return;
   }
 
-  const userData = users[req.cookies["user_id"]];
+  const userData = users[req.session.user_id];
   const templateVars = { user: userData };
   res.render("urls_new", templateVars);
 });
@@ -212,7 +222,7 @@ app.get("/urls/new", (req, res) => {
 // route to render the "URL Info" page (urls_show.ejs view)
 app.get("/urls/:id", (req, res) => {
   // check if user already logged in, if not respond with appropriate error
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.status(401).send("Please login or register to be able see shorten URL");
     return;
   }
@@ -224,7 +234,7 @@ app.get("/urls/:id", (req, res) => {
   }
 
   //get the urls data for given userId
-  const userUrls = urlsForUser(req.cookies["user_id"]);
+  const userUrls = urlsForUser(req.session.user_id);
 
   // check if the the URL belongs to the user, if not respond with an error
   if (!userUrls[req.params.id]) {
@@ -233,7 +243,7 @@ app.get("/urls/:id", (req, res) => {
   }
 
   //pass the relevant information by templateVars to the urls_show template view
-  const userData = users[req.cookies["user_id"]];
+  const userData = users[req.session.user_id];
   const templateVars = {
     id: req.params.id,
     longURL: userUrls[req.params.id],
@@ -246,7 +256,7 @@ app.get("/urls/:id", (req, res) => {
 // route to update a URL resource
 app.post("/urls/:id", (req, res) => {
   // check if user already logged in, if not respond with appropriate error
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.status(401).send("Please login or register to be able to update the URL");
     return;
   }
@@ -258,7 +268,7 @@ app.post("/urls/:id", (req, res) => {
   }
 
   //get the urls data for given userId
-  const userUrls = urlsForUser(req.cookies["user_id"]);
+  const userUrls = urlsForUser(req.session.user_id);
 
   // check if the the URL belongs to the user, if not respond with an error
   if (!userUrls[req.params.id]) {
@@ -274,7 +284,7 @@ app.post("/urls/:id", (req, res) => {
 // route to remove a URL resource
 app.post("/urls/:id/delete", (req, res) => {
   // check if user already logged in, if not respond with appropriate error
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.status(401).send("Please login or register to be able to delete the URL");
     return;
   }
@@ -286,7 +296,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 
   //get the urls data for given userId
-  const userUrls = urlsForUser(req.cookies["user_id"]);
+  const userUrls = urlsForUser(req.session.user_id);
 
   // check if the the URL belongs to the user, if not respond with an error
   if (!userUrls[req.params.id]) {
