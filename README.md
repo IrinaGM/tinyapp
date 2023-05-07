@@ -35,17 +35,23 @@ $ git clone https://github.com/YOUR-USERNAME/tinyapp
 
 1. Install dependencies:
 
-```
+```console
 npm install
 ```
 
 2. Start the application:
 
-```
+```console
 npm start
 ```
 
 3. Navigate to [http://localhost:8080/](http://localhost:8080/) in your browser.
+
+4. Run tests:
+
+```console
+npm test
+```
 
 ## License
 
