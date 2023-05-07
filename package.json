@@ -4,7 +4,6 @@
   "description": "A full stack web app built with Node and Express that allows users to shorten long URLs",
   "main": "express_server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "./node_modules/.bin/nodemon -L express_server.js",
     "test": "mocha"
   },
@@ -12,13 +11,16 @@
     "type": "git",
     "url": "git+https://github.com/IrinaGM/tinyapp.git"
   },
-  "keywords": [],
+  "keywords": [
+    "express",
+    "JavaScript",
+    "ejs"
+  ],
   "author": "IrinaGM",
   "license": "ISC",
   "homepage": "https://github.com/IrinaGM/tinyapp#readme",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.6",
     "cookie-session": "^2.0.0",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
