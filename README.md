@@ -7,6 +7,11 @@ A full stack web app built with Node and Express that allows users to shorten lo
 TinyApp is a website that reduces the length of a user provided URL (Uniform Resource Locator). The idea is to minimize the web page address into something that's easier to remember and track.
 This project was developed as part of lighthouse Labs Weeb Development course.
 
+## Final Product
+
+![Screenshot of URLs page](https://github.com/IrinaGM/tinyapp/blob/main/docs/urls-page.png)
+![Screenshot of view/ update specific URL](https://github.com/IrinaGM/tinyapp/blob/main/docs/urls-update-page.png)
+
 ## Dependencies
 
 - [bcryptjs](https://www.npmjs.com/package/bcryptjs)
