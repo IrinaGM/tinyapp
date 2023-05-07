@@ -1,6 +1,5 @@
 const express = require("express");
 const morgan = require("morgan");
-//const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 
@@ -11,10 +10,13 @@ const { getUserByEmail, generateRandomString, urlsForUser } = require("./helpers
 const app = express();
 const PORT = 8080;
 
-app.set("view engine", "ejs"); // set ejs as the view engine
-app.use(express.urlencoded({ extended: true })); // middleware that parses incoming requests with URL-encoded payloads and is based on a body parser
-app.use(morgan("dev")); // middleware to log HTTP requests for my app
-//app.use(cookieParser()); // middleware to parse cookies
+// set ejs as the view engine
+app.set("view engine", "ejs");
+// middleware that parses incoming requests with URL-encoded payloads and is based on a body parser
+app.use(express.urlencoded({ extended: true }));
+// middleware to log HTTP requests for my app
+app.use(morgan("dev"));
+// middleware for signing cookies
 app.use(
   cookieSession({
     name: "session",
@@ -81,10 +83,8 @@ app.post("/register", (req, res) => {
     password: bcrypt.hashSync(req.body.password, 10),
   };
 
-  console.log("user[newId]", users[newId]);
-  //res.cookie("user_id", newId);
+  //set signed cookie of user_id with signed value of newId
   req.session.user_id = newId;
-  console.log("req.session.user_id", req.session.user_id);
   res.redirect("/urls");
 });
 
@@ -95,7 +95,7 @@ app.get("/login", (req, res) => {
     res.redirect("/urls");
     return;
   }
-  // find user's data based on the cookie info (users id)
+  // find user's data based on the cookie info
   const userData = users[req.session.user_id];
   const templateVars = { user: userData };
   res.render("login", templateVars);
@@ -107,13 +107,13 @@ app.post("/login", (req, res) => {
   const email = req.body.email ? req.body.email : null;
   const password = req.body.password ? req.body.password : null;
 
-  // show error if email and/or passord was not provided
+  // show error if email and/or passord were not provided
   if (email === null || password === null) {
     res.status(400).send("Please provide email and password");
     return;
   }
 
-  // check if user exists in users DB, if not userData will be false
+  // check if user exists in users DB, if not userData will be null
   const userData = getUserByEmail(email, users);
 
   // if user doesn't exist respond with error
@@ -128,19 +128,18 @@ app.post("/login", (req, res) => {
     return;
   }
 
-  // set up cookie with the user id as written in users DB
-  //res.cookie("user_id", userData.id);
+  // set up signed cookie with the user id retrieved from users DB
   req.session.user_id = userData.id;
   res.redirect("/urls");
 });
 
-// route for logout functionality, clears the user name cookie and redirects the user back to the /login page
+// route for logout functionality, clears the user_id cookie and redirects the user back to the /login page
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
 
-// route to render the all existing URLs on "My URLs" page (urls_index.ejs view)
+// route to render all existing URLs on "My URLs" page (urls_index.ejs view)
 app.get("/urls", (req, res) => {
   // check if user already logged in, if not respond with error
   if (!req.session.user_id) {
@@ -163,7 +162,7 @@ app.post("/urls", (req, res) => {
     res.status(401).send("Please login or register to be able to shorten URL");
     return;
   }
-  // add the new url to DB.
+  // add the new url to urlDatabase
   const newId = generateRandomString();
   urlDatabase[newId] = { longURL: req.body.longURL, userID: req.session.user_id };
   res.redirect(`/urls/${newId}`);
@@ -178,7 +177,6 @@ app.get("/urls/new", (req, res) => {
   }
 
   const userData = users[req.session.user_id];
-  console.log("userData", userData);
   const templateVars = { user: userData };
   res.render("urls_new", templateVars);
 });
