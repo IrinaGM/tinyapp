@@ -35,17 +35,23 @@ const users = {
   "5d63jf": {
     id: "5d63jf",
     email: "test1@example.com",
-    password: "test1",
+    password: "$2a$12$c0gSAIrkZ8f4yNn07rm/SOsUjTkzUUwdol25oLg0gzn4r5VdpD5Iq",
   },
   "8d23jK": {
     id: "8d23jK",
     email: "test2@example.com",
-    password: "test2",
+    password: "$2a$12$gJj9yVTjd9bo47ROKRRfsOv2rdxeX28VwGgor40LU2KvoqEy2HUze",
   },
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  // check if user already logged in by checking if cookie user_id exists
+  if (req.session.user_id) {
+    res.redirect("/urls");
+    return;
+  }
+
+  res.redirect("/login");
 });
 
 // route for user registration form rendering
